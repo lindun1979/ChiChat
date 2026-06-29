@@ -117,7 +117,7 @@ By default, you only need **one Google AI API key** for everything. You can opti
 ## Quick Start
 
 ```bash
-git clone https://git.chivox.com/CHIVOX_AI_EXPLO/chichat.git
+git clone https://github.com/lindun1979/ChiChat.git
 cd chichat
 cp .env.example .env.local
 # Edit .env.local — add your GOOGLE_AI_API_KEY and CHIVOX_MCP_API_KEY
@@ -154,8 +154,7 @@ npm run lint      # ESLint
 - [x] Tea house scene assets (bg.png, npc.png) generated and deployed
 - [x] Ambient audio added for all 3 scenes (reused from voice-agent)
 - [x] End-to-end test passed — full flow: select → dialogue → review → coaching → drill
-- [x] Deployed to production on office Mac Mini via PM2 (port 3458)
-- [x] Pushed to GitLab: `CHIVOX_AI_EXPLO/chichat`
+- [x] Published to GitHub: [`lindun1979/ChiChat`](https://github.com/lindun1979/ChiChat)
 
 ### TODO
 
@@ -163,25 +162,6 @@ npm run lint      # ESLint
   - `public/scenes/hotel/{bg.png, npc.png}`
   - `public/scenes/market/{bg.png, npc.png}`
 - [ ] **Test Gemini Live Mandarin voice quality** — The prebuilt voices (Aoede, Puck, Orus) are multilingual but need testing for natural Mandarin. May need to swap voice assignments per scenario.
-
-## Deployment
-
-### Dev
-
-```
-~/workspace/dev/chichat
-```
-
-### Production (office Mac Mini)
-
-```bash
-ssh chivox@100.121.81.8
-cd ~/workspace/chichat
-npm install && npm run build
-pm2 restart chichat
-```
-
-Production runs on port **3458** via PM2. Code is pushed to GitLab from the Mac Mini (HTTPS + credential store).
 
 ## Disclaimer
 
