@@ -190,7 +190,7 @@ export const SCENARIOS: Record<string, ScenarioConfig> = {
 先热情地和客人打招呼。`,
     openingAction: "[一位外国客人走进茶馆]",
     completionMessage: "Order Complete!",
-    voiceName: "Aoede",
+    voiceName: "Puck",
     slots: [
       { id: "tea_type", icon: "🍵", label: "Tea", enumValues: ["绿茶", "红茶", "乌龙茶", "茉莉花茶", "普洱茶"] },
       { id: "size", icon: "🫖", label: "Size", enumValues: ["小壶", "中壶", "大壶"] },
@@ -253,7 +253,7 @@ export const SCENARIOS: Record<string, ScenarioConfig> = {
 先热情地和客人打招呼，问有什么可以帮助的。`,
     openingAction: "[一位没有预订的外国客人拿着行李走到前台]",
     completionMessage: "Check-in Complete!",
-    voiceName: "Puck",
+    voiceName: "Leda",
     slots: [
       { id: "room_type", icon: "🛏️", label: "Room", enumValues: ["标间", "大床房", "套房"] },
       { id: "nights", icon: "🌙", label: "Nights", enumValues: ["一晚", "两晚", "三晚"] },
@@ -273,12 +273,12 @@ export const SCENARIOS: Record<string, ScenarioConfig> = {
       deposit: ["现金", "刷卡", "微信支付"],
     },
     objectiveTemplate: (v) =>
-      `Check in for ${v.nights} in a ${v.room_type}, ${v.breakfast === "要" ? "with" : "without"} breakfast, deposit by ${v.deposit}`,
+      `入住${v.room_type}${v.nights}，${v.breakfast === "要" ? "含" : "不含"}早餐，${v.deposit}付押金`,
     completionCriteria: (v) => [
-      `Room type: ${v.room_type}`,
-      `Stay: ${v.nights}`,
-      `Breakfast: ${v.breakfast === "要" ? "yes" : "no"}`,
-      `Deposit: ${v.deposit}`,
+      `房型: ${v.room_type}`,
+      `住: ${v.nights}`,
+      `早餐: ${v.breakfast}`,
+      `押金: ${v.deposit}`,
     ],
   },
 
@@ -297,7 +297,7 @@ export const SCENARIOS: Record<string, ScenarioConfig> = {
     theme: GREEN_THEME,
     systemInstruction: `你是张阿姨，菜市场的一个热情的摊主。一位外国客人正在练习用普通话买菜。
 
-你的工作：打招呼 → 帮他们选（买什么、多少、新不新鲜、怎么付钱）→ 告诉价格 → 确认 → 告别。
+你的工作：打招呼 → 帮他们选（买什么、多少、要不要袋子、怎么付钱）→ 告诉价格 → 确认 → 告别。
 
 规则：
 - 每次说1-2句短句，使用简单词汇
@@ -307,36 +307,36 @@ export const SCENARIOS: Record<string, ScenarioConfig> = {
 - 当顾客提到相关信息时调用 update_slots
 - 所有4个信息填完后，告诉他们总价，确认订单，告别
 
-商品：西红柿、黄瓜、苹果、草莓。数量：半斤、一斤、两斤。新鲜度：今天的、昨天的。付款：现金、微信、支付宝。
+商品：西红柿、黄瓜、苹果、草莓。数量：半斤、一斤、两斤。袋子：塑料袋、纸袋、自己带的。付款：现金、微信、支付宝。
 
 先热情地和客人打招呼，说说今天什么菜新鲜。`,
     openingAction: "[一位外国客人走到菜摊前]",
     completionMessage: "Purchase Complete!",
-    voiceName: "Orus",
+    voiceName: "Kore",
     slots: [
       { id: "item", icon: "🥬", label: "Item", enumValues: ["西红柿", "黄瓜", "苹果", "草莓"] },
       { id: "quantity", icon: "⚖️", label: "Amount", enumValues: ["半斤", "一斤", "两斤"] },
-      { id: "freshness", icon: "🌿", label: "Fresh", enumValues: ["今天的", "昨天的"] },
+      { id: "bag", icon: "🛍️", label: "Bag", enumValues: ["塑料袋", "纸袋", "自己带的"] },
       { id: "payment", icon: "💳", label: "Pay", enumValues: ["现金", "微信", "支付宝"] },
     ],
     tierInstructions: {
       1: `说话非常慢，非常清楚。提供选择题，比如"你要西红柿还是黄瓜？"接受单个词的回答。指着东西帮他们选。`,
       2: `接受关键词式的回答，但用完整句子重复回来。比如他们说"苹果，一斤"，你回应"好的，一斤苹果！"鼓励用完整句子。`,
-      3: `用正常语速说话。加入生活化的内容，比如"今天的草莓特别甜，早上刚到的。"期望完整句子和一些追问。`,
+      3: `用正常语速说话。加入生活化的内容，比如"今天的草莓特别甜，早上刚到的。要袋子吗？"期望完整句子和一些追问。`,
       4: `完全自然地聊天。聊聊怎么挑菜、怎么做菜（"这西红柿炒鸡蛋最好吃"），用地道的口语。期望自然对话。`,
     },
     taskOptions: {
       item: ["西红柿", "黄瓜", "苹果", "草莓"],
       quantity: ["半斤", "一斤", "两斤"],
-      freshness: ["今天的", "昨天的"],
+      bag: ["塑料袋", "纸袋", "自己带的"],
       payment: ["现金", "微信", "支付宝"],
     },
     objectiveTemplate: (v) =>
-      `Buy ${v.quantity} of ${v.item} (${v.freshness}), pay by ${v.payment}`,
+      `Buy ${v.quantity} of ${v.item}, bag: ${v.bag}, pay by ${v.payment}`,
     completionCriteria: (v) => [
       `Choose: ${v.item}`,
       `Quantity: ${v.quantity}`,
-      `Freshness: ${v.freshness}`,
+      `Bag: ${v.bag}`,
       `Pay by ${v.payment}`,
     ],
   },

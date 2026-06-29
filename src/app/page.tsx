@@ -37,6 +37,23 @@ function ColoredWords({ wordScores }: { wordScores: WordScore[] }) {
   );
 }
 
+function tryParsePartialJson(text: string): Partial<EnrichedEvaluation> | null {
+  const cleaned = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+  if (!cleaned.startsWith("{")) return null;
+  const closers = ["}", "]}", "]}}", "]}]}}", '"}}}', '"}}', '"}'];
+  for (const closer of closers) {
+    try {
+      const obj = JSON.parse(cleaned + closer);
+      if (obj && typeof obj === "object") return obj;
+    } catch { /* continue */ }
+  }
+  try {
+    const obj = JSON.parse(cleaned);
+    if (obj && typeof obj === "object") return obj;
+  } catch { /* not parseable yet */ }
+  return null;
+}
+
 type Phase = "select" | "briefing" | "dialogue" | "review" | "coaching" | "drill";
 
 function SceneBackground({ scenario }: { scenario: ScenarioConfig }) {
@@ -292,7 +309,7 @@ function TranscriptReviewView({
   );
 }
 
-function extractKeyImprovements(evaluation: EnrichedEvaluation): {
+function extractKeyImprovements(evaluation: Partial<EnrichedEvaluation>): {
   type: "dimension" | "pronunciation";
   label: string;
   detail: string;
@@ -300,15 +317,15 @@ function extractKeyImprovements(evaluation: EnrichedEvaluation): {
 }[] {
   const items: { type: "dimension" | "pronunciation"; label: string; detail: string; score?: number }[] = [];
 
-  for (const df of evaluation.dimensionFeedback) {
+  for (const df of evaluation.dimensionFeedback ?? []) {
     if (!df.completed) {
       items.push({ type: "dimension", label: df.slotLabel, detail: `Not completed: ${df.improvements || "You need to express this in the conversation"}` });
     }
   }
 
   const allWeakWords = [
-    ...(evaluation.dimensionFeedback.flatMap((d) => d.weakWords || [])),
-    ...(evaluation.pronunciationDetails.weakWords || []),
+    ...((evaluation.dimensionFeedback ?? []).flatMap((d) => d.weakWords || [])),
+    ...(evaluation.pronunciationDetails?.weakWords || []),
   ];
   const seen = new Set<string>();
   for (const w of allWeakWords.sort((a, b) => a.score - b.score)) {
@@ -324,6 +341,7 @@ function CoachingView({
   scenario,
   evaluation,
   evaluating,
+  partialEval,
   onDrill,
   onRetry,
   onBack,
@@ -331,6 +349,7 @@ function CoachingView({
   scenario: ScenarioConfig;
   evaluation: EnrichedEvaluation | null;
   evaluating: boolean;
+  partialEval: Partial<EnrichedEvaluation> | null;
   onDrill: () => void;
   onRetry: () => void;
   onBack: () => void;
@@ -342,7 +361,10 @@ function CoachingView({
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  if (evaluating && !evaluation) {
+  const displayData = evaluation ?? partialEval;
+  const isStreaming = evaluating && !evaluation;
+
+  if (isStreaming && !displayData) {
     return (
       <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 py-8">
         <div className="max-w-lg w-full bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8 text-center">
@@ -356,7 +378,7 @@ function CoachingView({
     );
   }
 
-  if (!evaluation) {
+  if (!displayData) {
     return (
       <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 py-8">
         <div className="max-w-lg w-full bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8 text-center">
@@ -374,7 +396,7 @@ function CoachingView({
     );
   }
 
-  const keyImprovements = extractKeyImprovements(evaluation);
+  const keyImprovements = extractKeyImprovements(displayData as EnrichedEvaluation);
 
   return (
     <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 py-8">
@@ -384,32 +406,44 @@ function CoachingView({
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          {/* Streaming indicator */}
+          {isStreaming && (
+            <div className="flex items-center gap-2 text-xs text-blue-500">
+              <div className="w-4 h-4 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+              Analyzing...
+            </div>
+          )}
+
           {/* Section 1: Tier + Encouragement */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                evaluation.expressionTier >= 3 ? "bg-green-100 text-green-700" :
-                evaluation.expressionTier >= 2 ? "bg-yellow-100 text-yellow-700" :
-                "bg-red-100 text-red-700"
-              }`}>
-                Tier {evaluation.expressionTier} · {TIER_LABELS[evaluation.expressionTier]}
-              </span>
-              {evaluation.pronunciationScore != null && (
-                <span className="text-xs text-gray-400">Pronunciation: {evaluation.pronunciationScore}</span>
+          {displayData.expressionTier && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                  displayData.expressionTier >= 3 ? "bg-green-100 text-green-700" :
+                  displayData.expressionTier >= 2 ? "bg-yellow-100 text-yellow-700" :
+                  "bg-red-100 text-red-700"
+                }`}>
+                  Tier {displayData.expressionTier} · {TIER_LABELS[displayData.expressionTier as Tier]}
+                </span>
+                {displayData.pronunciationScore != null && (
+                  <span className="text-xs text-gray-400">Pronunciation: {displayData.pronunciationScore}</span>
+                )}
+              </div>
+              {displayData.tierImproved && (
+                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-2 mb-2">
+                  <span className="text-green-700 text-sm font-medium">
+                    Congrats! You leveled up from {TIER_LABELS[displayData.priorTier as Tier]} to {TIER_LABELS[displayData.newTier as Tier]}!
+                  </span>
+                </div>
+              )}
+              {displayData.encouragement && (
+                <p className="text-sm text-gray-600">{displayData.encouragement}</p>
+              )}
+              {displayData.summary && (
+                <p className="text-sm text-gray-700 mt-2">{displayData.summary}</p>
               )}
             </div>
-            {evaluation.tierImproved && (
-              <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-2 mb-2">
-                <span className="text-green-700 text-sm font-medium">
-                  Congrats! You leveled up from {TIER_LABELS[evaluation.priorTier]} to {TIER_LABELS[evaluation.newTier]}!
-                </span>
-              </div>
-            )}
-            {evaluation.encouragement && (
-              <p className="text-sm text-gray-600">{evaluation.encouragement}</p>
-            )}
-            <p className="text-sm text-gray-700 mt-2">{evaluation.summary}</p>
-          </div>
+          )}
 
           {/* Section 2: Key Improvements (always expanded) */}
           {keyImprovements.length > 0 && (
@@ -439,7 +473,7 @@ function CoachingView({
           )}
 
           {/* Section 3: Dimension Details (collapsible) */}
-          {evaluation.dimensionFeedback.length > 0 && (
+          {(displayData.dimensionFeedback?.length ?? 0) > 0 && (
             <div>
               <button
                 onClick={() => toggleSection("dimensions")}
@@ -450,7 +484,7 @@ function CoachingView({
               </button>
               {expandedSections.dimensions && (
                 <div className="mt-2 space-y-2">
-                  {evaluation.dimensionFeedback.map((df, i) => {
+                  {displayData.dimensionFeedback!.map((df, i) => {
                     const slotDef = scenario.slots.find((s) => s.id === df.slotId);
                     return (
                       <div key={i} className="bg-gray-50 rounded-lg p-3 text-sm">
@@ -483,7 +517,7 @@ function CoachingView({
           )}
 
           {/* Section 4: Pronunciation Details (collapsible) */}
-          {evaluation.pronunciationDetails.weakWords.length > 0 && (
+          {(displayData.pronunciationDetails?.weakWords?.length ?? 0) > 0 && (
             <div>
               <button
                 onClick={() => toggleSection("pronunciation")}
@@ -494,11 +528,11 @@ function CoachingView({
               </button>
               {expandedSections.pronunciation && (
                 <div className="mt-2">
-                  {evaluation.pronunciationDetails.overallComment && (
-                    <p className="text-sm text-gray-600 mb-2">{evaluation.pronunciationDetails.overallComment}</p>
+                  {displayData.pronunciationDetails!.overallComment && (
+                    <p className="text-sm text-gray-600 mb-2">{displayData.pronunciationDetails!.overallComment}</p>
                   )}
                   <div className="space-y-1">
-                    {evaluation.pronunciationDetails.weakWords.map((w, i) => (
+                    {displayData.pronunciationDetails!.weakWords.map((w, i) => (
                       <div key={i} className="flex items-center gap-2 text-sm bg-gray-50 rounded-lg px-3 py-2">
                         <span style={{ color: scoreColor(w.score) }} className="font-bold">{w.word}</span>
                         <span className="text-gray-400 text-xs">{w.score}</span>
@@ -513,7 +547,7 @@ function CoachingView({
           )}
 
           {/* Section 5: Suggestions (collapsible) */}
-          {evaluation.suggestions.length > 0 && (
+          {(displayData.suggestions?.length ?? 0) > 0 && (
             <div>
               <button
                 onClick={() => toggleSection("suggestions")}
@@ -524,7 +558,7 @@ function CoachingView({
               </button>
               {expandedSections.suggestions && (
                 <div className="mt-2 space-y-2">
-                  {evaluation.suggestions.map((s, i) => (
+                  {displayData.suggestions!.map((s, i) => (
                     <div key={i} className="bg-blue-50 rounded-lg p-3 text-sm">
                       <div className="text-gray-500 line-through">{s.said}</div>
                       <div className="text-blue-700 font-medium">{s.better}</div>
@@ -537,20 +571,20 @@ function CoachingView({
           )}
 
           {/* General feedback */}
-          {evaluation.generalFeedback && (
-            <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">{evaluation.generalFeedback}</p>
+          {displayData.generalFeedback && (
+            <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">{displayData.generalFeedback}</p>
           )}
         </div>
 
         {/* Bottom actions */}
         <div className="px-6 py-3 border-t border-gray-100 shrink-0">
           <div className="flex gap-2">
-            {evaluation.targetedDrills.length > 0 && (
+            {!isStreaming && (displayData.targetedDrills?.length ?? 0) > 0 && (
               <button
                 onClick={onDrill}
                 className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors text-sm"
               >
-                Start Drills ({evaluation.targetedDrills.length})
+                Start Drills ({displayData.targetedDrills!.length})
               </button>
             )}
             <button
@@ -581,6 +615,7 @@ export default function LiveDialoguePage() {
   const [task, setTask] = useState<Task | null>(null);
   const [evaluation, setEvaluation] = useState<EnrichedEvaluation | null>(null);
   const [evaluating, setEvaluating] = useState(false);
+  const [partialEval, setPartialEval] = useState<Partial<EnrichedEvaluation> | null>(null);
   const [priorTier, setPriorTier] = useState<Tier>(1);
 
   const scenario = scenarioId ? SCENARIOS[scenarioId] : null;
@@ -634,6 +669,7 @@ export default function LiveDialoguePage() {
         wordScores: m.wordScores,
       }));
 
+    setPartialEval(null);
     try {
       const res = await fetch("/api/evaluate-conversation", {
         method: "POST",
@@ -649,26 +685,54 @@ export default function LiveDialoguePage() {
           scenarioId,
         }),
       });
-      if (!res.ok) {
-        console.error("Evaluation API error:", res.status, await res.text());
-        return;
-      }
-      const apiResult = await res.json();
-      if (!apiResult.expressionTier) {
-        console.error("Evaluation returned invalid data:", apiResult);
+      if (!res.ok || !res.body) {
+        console.error("Evaluation API error:", res.status);
         return;
       }
 
-      const updatedProgress = updateProgress(scenarioId, apiResult);
-      const tierImproved = updatedProgress.currentTier > currentPriorTier;
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulated = "";
 
-      const enriched: EnrichedEvaluation = {
-        ...apiResult,
-        tierImproved,
-        priorTier: currentPriorTier,
-        newTier: updatedProgress.currentTier as Tier,
-      };
-      setEvaluation(enriched);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(trimmed.slice(6));
+            if (data.chunk) {
+              accumulated += data.chunk;
+              const partial = tryParsePartialJson(accumulated);
+              if (partial) setPartialEval(partial);
+            }
+            if (data.result) {
+              const apiResult = data.result;
+              const updatedProgress = updateProgress(scenarioId, apiResult);
+              const tierImproved = updatedProgress.currentTier > currentPriorTier;
+              const enriched: EnrichedEvaluation = {
+                ...apiResult,
+                tierImproved,
+                priorTier: currentPriorTier,
+                newTier: updatedProgress.currentTier as Tier,
+              };
+              setEvaluation(enriched);
+              setPartialEval(null);
+            }
+            if (data.error) {
+              console.error("Evaluation error:", data.error);
+            }
+          } catch {
+            // skip malformed SSE
+          }
+        }
+      }
     } catch (e) {
       console.error("Evaluation failed:", e);
     } finally {
@@ -746,6 +810,7 @@ export default function LiveDialoguePage() {
             scenario={scenario}
             evaluation={evaluation}
             evaluating={evaluating}
+            partialEval={partialEval}
             onDrill={handleDrill}
             onRetry={handleRetry}
             onBack={handleBackToReview}

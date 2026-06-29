@@ -57,11 +57,11 @@ Promotion requires 2 consecutive evaluations above current tier. Progress stored
 
 ## Scenarios
 
-| Scenario | NPC | Slots | Theme |
-|----------|-----|-------|-------|
-| Tea House | 小王 (server) | tea_type, size, snack, seating | Red |
-| Hotel | 小李 (front desk) | room_type, nights, breakfast, deposit | Blue |
-| Wet Market | 张阿姨 (vendor) | item, quantity, freshness, payment | Green |
+| Scenario | NPC | Voice | Slots | Theme |
+|----------|-----|-------|-------|-------|
+| Tea House | 小王 (server) | Puck (male) | tea_type, size, snack, seating | Red |
+| Hotel | 小李 (front desk) | Leda (female, young) | room_type, nights, breakfast, deposit | Blue |
+| Wet Market | 张阿姨 (vendor) | Kore (female, mature) | item, quantity, bag, payment | Green |
 
 Each NPC speaks only Mandarin, is patient with non-native speakers, and adapts behavior to the learner's tier level.
 
