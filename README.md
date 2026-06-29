@@ -154,14 +154,10 @@ npm run lint      # ESLint
 - [x] Tea house scene assets (bg.png, npc.png) generated and deployed
 - [x] Ambient audio added for all 3 scenes (reused from voice-agent)
 - [x] End-to-end test passed — full flow: select → dialogue → review → coaching → drill
+- [x] All 3 scene assets (bg.png, npc.png) generated and deployed
+- [x] Gemini Live Mandarin voice quality tested — voices assigned: Puck (male), Leda (young female), Kore (mature female)
 - [x] Published to GitHub: [`lindun1979/ChiChat`](https://github.com/lindun1979/ChiChat)
 
-### TODO
-
-- [ ] **Generate hotel & market NPC images** — Use prompts in `claude-chinese-prompts.md` to generate:
-  - `public/scenes/hotel/{bg.png, npc.png}`
-  - `public/scenes/market/{bg.png, npc.png}`
-- [ ] **Test Gemini Live Mandarin voice quality** — The prebuilt voices (Aoede, Puck, Orus) are multilingual but need testing for natural Mandarin. May need to swap voice assignments per scenario.
 
 ## Disclaimer
 
