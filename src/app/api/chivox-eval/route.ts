@@ -37,7 +37,7 @@ async function getMcpSession(apiKey: string): Promise<string> {
 }
 
 async function callChivoxEval(apiKey: string, sessionId: string, refText: string, audioBase64: string, evalType: "word" | "sentence" = "sentence") {
-  const toolName = evalType === "word" ? "cn_word_eval" : "cn_sentence_eval";
+  const toolName = "cn_sentence_eval";
   const res = await fetch(MCP_URL, {
     method: "POST",
     headers: {
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (data.result?.isError || !fullResult?.result) {
-      console.error("[chivox-eval] Chivox error:", textContent?.substring(0, 200));
+      console.error("[chivox-eval] Chivox error:", textContent?.substring(0, 200), "raw:", JSON.stringify(data).substring(0, 500));
       return NextResponse.json({ error: "Chivox evaluation failed" }, { status: 502 });
     }
 

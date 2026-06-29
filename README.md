@@ -48,7 +48,7 @@ Promotion requires 2 consecutive evaluations above current tier. Progress stored
 | Component | Technology |
 |-----------|-----------|
 | Real-time voice dialogue | Google Gemini Live API (`gemini-3.1-flash-live-preview`) via `@google/genai` SDK |
-| Pronunciation scoring | Chivox MCP API (`cn_word_eval` / `cn_sentence_eval`) |
+| Pronunciation scoring | Chivox MCP API (`cn_sentence_eval`) |
 | Conversation evaluation | Configurable: Gemini 2.5 Flash (default) or any OpenAI-compatible API |
 | Framework | Next.js 16 + React 19 + TypeScript |
 | Styling | Tailwind CSS 4 |
@@ -76,7 +76,7 @@ chichat/
 │   │   └── api/
 │   │       ├── gemini-token/route.ts   # Provides Google API key to client
 │   │       ├── evaluate-conversation/  # LLM evaluation endpoint (dual-mode)
-│   │       └── chivox-eval/route.ts    # Chivox MCP proxy (cn_word/sentence_eval)
+│   │       └── chivox-eval/route.ts    # Chivox MCP proxy (cn_sentence_eval)
 │   ├── lib/
 │   │   ├── scenarios.ts               # 3 Mandarin scenario configs
 │   │   ├── gemini-live.ts             # Gemini Live session management
@@ -89,9 +89,9 @@ chichat/
 │   └── components/
 │       └── DrillView.tsx              # Pronunciation drill UI (zh-CN TTS)
 ├── public/scenes/
-│   ├── teahouse/                      # bg.png, npc.png, ambient.mp3 (TODO)
-│   ├── hotel/                         # bg.png, npc.png, ambient.mp3 (TODO)
-│   └── market/                        # bg.png, npc.png, ambient.mp3 (TODO)
+│   ├── teahouse/                      # bg.png, npc.png, ambient.mp4
+│   ├── hotel/                         # ambient.mp3 (bg.png, npc.png TODO)
+│   └── market/                        # ambient.mp3 (bg.png, npc.png TODO)
 ├── claude-chinese-prompts.md          # AI image generation prompts for scenes/NPCs
 ├── .env.example                       # Environment variables template
 ├── LICENSE                            # MIT
@@ -117,7 +117,7 @@ This means you can use GLM, DeepSeek, or any other OpenAI-compatible API for eva
 ## Quick Start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/chichat.git
+git clone https://git.chivox.com/CHIVOX_AI_EXPLO/chichat.git
 cd chichat
 cp .env.example .env.local
 # Edit .env.local — add your GOOGLE_AI_API_KEY and CHIVOX_MCP_API_KEY
@@ -142,8 +142,8 @@ npm run lint      # ESLint
 
 - [x] Project forked from voice-agent, stripped all English content
 - [x] 3 Mandarin scenarios with full NPC system instructions and tier-adaptive behavior
-- [x] Chivox integration switched to Chinese evaluation tools (`cn_word_eval` / `cn_sentence_eval`)
-- [x] Evaluation LLM dual-mode: Gemini default + OpenAI-compatible custom endpoint
+- [x] Chivox integration — unified `cn_sentence_eval` for both word and sentence scoring. Endpoint: `https://mcp-global.cloud.chivox.com/mcp`
+- [x] Evaluation LLM dual-mode: Gemini default + OpenAI-compatible custom endpoint (production uses GLM-4-flash)
 - [x] Evaluation prompts rewritten for Mandarin proficiency (measure words, particles, tones)
 - [x] All UI strings translated to English (target: foreigners learning Mandarin)
 - [x] DrillView TTS switched to zh-CN
@@ -151,23 +151,22 @@ npm run lint      # ESLint
 - [x] MIT license, .env.example, .gitignore
 - [x] All 42 tests passing, build compiles clean
 - [x] AI image generation prompts written (`claude-chinese-prompts.md`)
+- [x] Tea house scene assets (bg.png, npc.png) generated and deployed
+- [x] Ambient audio added for all 3 scenes (reused from voice-agent)
+- [x] End-to-end test passed — full flow: select → dialogue → review → coaching → drill
+- [x] Deployed to production on office Mac Mini via PM2 (port 3458)
+- [x] Pushed to GitLab: `CHIVOX_AI_EXPLO/chichat`
 
 ### TODO
 
-- [x] **Verify Chivox Chinese tool names** — Confirmed: `cn_word_eval` / `cn_sentence_eval`. Endpoint: `https://mcp-global.cloud.chivox.com/mcp`.
-- [ ] **Generate NPC images** — Use prompts in `claude-chinese-prompts.md` to generate:
-  - `public/scenes/teahouse/{bg.png, npc.png}`
+- [ ] **Generate hotel & market NPC images** — Use prompts in `claude-chinese-prompts.md` to generate:
   - `public/scenes/hotel/{bg.png, npc.png}`
   - `public/scenes/market/{bg.png, npc.png}`
-- [ ] **Generate/source ambient audio** — Background audio for each scene (tea house ambiance, hotel lobby, market bustle)
 - [ ] **Test Gemini Live Mandarin voice quality** — The prebuilt voices (Aoede, Puck, Orus) are multilingual but need testing for natural Mandarin. May need to swap voice assignments per scenario.
-- [ ] **End-to-end test with real API keys** — Full flow: select → dialogue → review → coaching → drill
-- [ ] **Create GitHub repo** and push
-- [ ] **Deploy to production** — Set up on office Mac Mini (`~/workspace/chichat`), configure PM2
 
 ## Deployment
 
-### Dev (local)
+### Dev
 
 ```
 ~/workspace/dev/chichat
@@ -175,17 +174,14 @@ npm run lint      # ESLint
 
 ### Production (office Mac Mini)
 
-```
+```bash
 ssh chivox@100.121.81.8
 cd ~/workspace/chichat
+npm install && npm run build
+pm2 restart chichat
 ```
 
-Production setup (after code is synced):
-```bash
-npm install
-npm run build
-# PM2 or similar process manager
-```
+Production runs on port **3458** via PM2. Code is pushed to GitLab from the Mac Mini (HTTPS + credential store).
 
 ## Disclaimer
 
