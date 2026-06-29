@@ -8,7 +8,7 @@ import {
 
 const LLM_BASE = process.env.LLM_BASE_URL;
 const LLM_KEY = process.env.LLM_API_KEY;
-const LLM_MODEL = process.env.LLM_MODEL || "gemini-2.5-flash";
+const LLM_MODEL = process.env.LLM_MODEL || "gemini-3.1-flash-lite";
 const GOOGLE_KEY = process.env.GOOGLE_AI_API_KEY || "";
 
 const useGemini = !LLM_BASE;

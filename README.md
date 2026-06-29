@@ -49,7 +49,7 @@ Promotion requires 2 consecutive evaluations above current tier. Progress stored
 |-----------|-----------|
 | Real-time voice dialogue | Google Gemini Live API (`gemini-3.1-flash-live-preview`) via `@google/genai` SDK |
 | Pronunciation scoring | Chivox MCP API (`cn_sentence_eval`) |
-| Conversation evaluation | Configurable: Gemini 2.5 Flash (default) or any OpenAI-compatible API |
+| Conversation evaluation | Gemini 3.1 Flash Lite (default, free tier) or any OpenAI-compatible API |
 | Framework | Next.js 16 + React 19 + TypeScript |
 | Styling | Tailwind CSS 4 |
 | Testing | Vitest (42 tests passing) |
@@ -102,17 +102,17 @@ chichat/
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `GOOGLE_AI_API_KEY` | Yes | — | Google AI Studio API key. Powers Gemini Live dialogue. |
+| `GOOGLE_AI_API_KEY` | Yes | — | Google AI Studio API key. Powers both Gemini Live dialogue and conversation evaluation. |
 | `CHIVOX_MCP_API_KEY` | Yes | — | Chivox MCP API key. Powers pronunciation scoring. |
 | `LLM_BASE_URL` | No | _(uses Gemini)_ | Custom LLM endpoint (OpenAI-compatible format). |
 | `LLM_API_KEY` | No | _(falls back to GOOGLE_AI_API_KEY)_ | API key for custom LLM endpoint. |
-| `LLM_MODEL` | No | `gemini-2.5-flash` | Model name for conversation evaluation. |
+| `LLM_MODEL` | No | `gemini-3.1-flash-lite` | Model name for conversation evaluation. |
 
 **Evaluation LLM dual-mode**:
-- If `LLM_BASE_URL` is not set → uses `@google/genai` SDK with `GOOGLE_AI_API_KEY` + Gemini 2.5 Flash
+- If `LLM_BASE_URL` is not set → uses `@google/genai` SDK with `GOOGLE_AI_API_KEY` + Gemini 3.1 Flash Lite (free tier: 500 req/day)
 - If `LLM_BASE_URL` is set → uses OpenAI-compatible `POST /chat/completions` with `LLM_API_KEY` + `LLM_MODEL`
 
-This means you can use GLM, DeepSeek, or any other OpenAI-compatible API for evaluation.
+By default, you only need **one Google AI API key** for everything. You can optionally use GLM, DeepSeek, or any other OpenAI-compatible API for evaluation.
 
 ## Quick Start
 
