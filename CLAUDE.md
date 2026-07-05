@@ -20,5 +20,15 @@
   - market 张阿姨（女）→ Kore
 - **NPC 语音性别错配（女 NPC 配男声）历史上出过两次**，改动 voiceName 或新增场景前必须核对 NPC 性别与音色性别一致
 
+## 公网访问（Cloudflare Tunnel）
+- 域名: voiceagent.bond（DNS 托管在 Cloudflare）
+- chichat.voiceagent.bond → localhost:3458（ChiChat 学中文）
+- app.voiceagent.bond → localhost:3457（voice-agent 学英语）
+- 根域名 voiceagent.bond → 落地页（待建，计划用 Cloudflare Pages）
+- 隧道名: voiceagent，ID: 74362578-3fcd-40c0-af55-9e0292000944
+- 配置文件: ~/.cloudflared/config.yml
+- 进程管理: launchd（com.cloudflare.cloudflared），开机自启 + 崩溃自动重启
+- 加新服务: 编辑 config.yml 加 ingress → `cloudflared tunnel route dns voiceagent <subdomain>` → `launchctl kickstart -k gui/$(id -u)/com.cloudflare.cloudflared`
+
 ## 已知技术包袱
 - 生产端口 3458 未在 repo 内配置文件中固化，依赖生产机启动参数 (待确认)

@@ -157,6 +157,7 @@ npm run lint      # ESLint
 - [x] All 3 scene assets (bg.png, npc.png) generated and deployed
 - [x] Gemini Live Mandarin voice quality tested — voices assigned: Puck (male), Leda (young female), Kore (mature female)
 - [x] Published to GitHub: [`lindun1979/ChiChat`](https://github.com/lindun1979/ChiChat)
+- [x] Public access via Cloudflare Tunnel: `https://chichat.voiceagent.bond`
 
 
 ## Disclaimer
